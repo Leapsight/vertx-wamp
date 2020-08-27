@@ -54,3 +54,29 @@ compileJava {
 java {
     disableAutoTargetJvm()
 }
+
+group = 'com.leapsight'
+version = System.getenv('JAR_VERSION')
+
+artifactory {
+    contextUrl = System.getenv('MVN_CONTEXTURL')
+    publish {
+        repository {
+            repoKey = System.getenv('MVN_KEY')
+            username = System.getenv('MVN_USER')
+            password = System.getenv('MVN_PASSWORD')
+            maven = true
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
