@@ -1,4 +1,4 @@
-package leapsight.vertxwamp.exceptions;
+package leapsight.vertxwamp.exception;
 
 /**
  * The generic error codes
