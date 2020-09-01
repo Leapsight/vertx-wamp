@@ -7,5 +7,8 @@
  * in the user manual at https://docs.gradle.org/6.5.1/userguide/multi_project_builds.html
  */
 
-rootProject.name = 'vertx-wamp'
+plugins {
+    id 'com.alexvasilkov.git-dependencies' version '2.0.1'
+}
 
+rootProject.name = 'vertx-wamp'
