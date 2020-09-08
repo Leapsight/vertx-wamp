@@ -2,6 +2,7 @@ package leapsight.vertxwamp.verticlefactory;
 
 import jawampa.WampClient;
 import jawampa.WampClientBuilder;
+import jawampa.auth.client.Ticket;
 import jawampa.connection.IWampConnectorProvider;
 import jawampa.transport.netty.NettyWampClientConnectorProvider;
 import org.slf4j.Logger;
@@ -16,20 +17,19 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @ComponentScan("leapsight.vertxwamp.verticlefactory")
 public class SpringConfigurationLib {
-
-    @Value("${SERVICE.WAMP_ROUTER_URI}")
+    @Value("${wamp.router.uri}")
     protected String routerUri;
 
-    @Value("${SERVICE.WAMP_REALM}")
+    @Value("${wamp.realm}")
     protected String realm;
 
-    @Value("${SERVICE.WAMP_USERNAME}")
+    @Value("${wamp.username}")
     protected String username;
 
-    @Value("${SERVICE.WAMP_PASSWORD}")
+    @Value("${wamp.password}")
     protected String password;
 
-    @Value("${SERVICE.WAMP_RECONNECT_INTERVAL_SECONDS}")
+    @Value("${wamp.reconnect.interval.seconds}")
     protected int reconnectIntervalSeconds;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringConfigurationLib.class);
@@ -45,8 +45,8 @@ public class SpringConfigurationLib {
             builder.withConnectorProvider(connectorProvider)
                     .withUri(routerUri)
                     .withRealm(realm)
-//               .withAuthId(username)
-//               .withAuthMethod(new Ticket(password))
+                    .withAuthId(username)
+                    .withAuthMethod(new Ticket(password))
                     .withInfiniteReconnects()
                     .withReconnectInterval(reconnectIntervalSeconds, TimeUnit.SECONDS);
             WampClient wampClient = builder.build();
