@@ -6,20 +6,19 @@ import java.time.temporal.ChronoUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.Vertx;
 import jawampa.Request;
 import leapsight.vertxwamp.util.LoggingConstants;
-import rx.functions.Action2;
+import rx.functions.Action1;
 
 /**
  * Our Processors needs to extends from this class
  */
-public abstract class AbstractEndPointProcessor implements Action2<Request, Vertx> {
+public abstract class AbstractEndPointProcessor implements Action1<Request> {
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndPointProcessor.class);
 
 	@Override
-	public void call(Request request, Vertx vertx) {
+	public void call(Request request) {
 		final Instant start = Instant.now();
 		final String procedure = request.details().get(LoggingConstants.WAMP_PROCEDURE_KEY) != null
 				? request.details().get(LoggingConstants.WAMP_PROCEDURE_KEY).asText()
@@ -29,7 +28,7 @@ public abstract class AbstractEndPointProcessor implements Action2<Request, Vert
 		try {
 			LOGGER.info("{} START! Request Arguments: {} - KwArguments: {}", procedure, request.arguments(),
 					request.keywordArguments());
-			process(request, vertx);
+			process(request);
 		} catch (Exception e) {
 			LOGGER.error("{} ERROR! Exception ocurred", procedure);
 		} finally {
@@ -40,6 +39,6 @@ public abstract class AbstractEndPointProcessor implements Action2<Request, Vert
 	/**
 	 * Template Method for function registration
 	 */
-	protected abstract void process(Request request, Vertx vertx);
+	protected abstract void process(Request request);
 
 }
