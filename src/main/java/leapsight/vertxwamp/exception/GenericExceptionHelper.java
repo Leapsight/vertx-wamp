@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jawampa.ApplicationError;
 
-public class GenericException {
+public class GenericExceptionHelper {
 
 	public <T extends Exception> ApplicationError createMsgFromException(T e, String message) {
 		return createMsgFromException(GenericErrorCodes.UNEXPECTED_ERROR, message, e);

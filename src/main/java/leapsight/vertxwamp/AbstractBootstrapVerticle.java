@@ -25,10 +25,6 @@ import org.springframework.core.env.Environment;
 public abstract class AbstractBootstrapVerticle {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBootstrapVerticle.class);
-	/**
-	 * Lista donde se guardan los verticles del microservicio que se desea implementar
-	 */
-	//List<String> verticleList;
 
 	public void start() {
 

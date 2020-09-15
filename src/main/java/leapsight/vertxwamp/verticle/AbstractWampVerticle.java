@@ -18,7 +18,7 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 @Scope(SCOPE_PROTOTYPE)
 public abstract class AbstractWampVerticle extends AbstractVerticle {
 
-    protected static Logger LOG = LoggerFactory.getLogger(AbstractWampVerticle.class);
+    protected static Logger LOGGER = LoggerFactory.getLogger(AbstractWampVerticle.class);
 
     @Autowired
     private WampClient wampClient;
@@ -27,8 +27,6 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
      * Template Method
      */
     protected abstract void registerProcedures(final WampClient client);
-
-    protected abstract void callProcedures(final WampClient client);
     /**
      * If your verticle does a simple, synchronous start-up then override this method and put your start-up
      * code in here.
@@ -37,20 +35,17 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
         try {
-        	LOG.info("==================================================================================================");
-        	LOG.info("Starting WampVerticle ...");
+        	LOGGER.info("==================================================================================================");
+        	LOGGER.info("Starting WampVerticle ...");
 
             registerProcedures(wampClient); // implementacion propia de cada microservicio
 
-            callProcedures(wampClient); // implementacion propia de cada microservicio
-
-            LOG.info("WampVerticle started: @" + this.hashCode());
-            
+            LOGGER.info("WampVerticle started: @" + this.hashCode());
             startPromise.complete();
             
         } catch (Exception e) {
-            LOG.error("WAMP client initialization failed", e);
-            startPromise.fail("WAMP client initialization failed"); // avisa que falló, despues en el bootstrap hay que ver que hacer con este fallo (reintentar u otra cosa)
+        	LOGGER.error("WampVerticle initialization failed", e);
+            startPromise.fail("WampVerticle initialization failed"); // avisa que falló, despues en el bootstrap hay que ver que hacer con este fallo (reintentar u otra cosa)
         }
 
     }
@@ -62,14 +57,17 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
      */
     @Override
     public void stop() throws Exception {
+    	LOGGER.info("==================================================================================================");
+    	LOGGER.info("Stopping WampVerticle ...");
     	closeWampClient();
+    	LOGGER.info("WampVerticle stopped: @" + this.hashCode());
     }
     
     protected void closeWampClient() {
     	if (wampClient != null)	{
-    		LOG.info("Closing the WAMP client ...");	
+    		LOGGER.info("Closing the WAMP client ...");	
     		wampClient.close().toBlocking().last();
-    		LOG.info("WAMP client closed");
+    		LOGGER.info("WAMP client closed");
     	}
     }
 }
