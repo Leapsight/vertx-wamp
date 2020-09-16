@@ -13,7 +13,7 @@ import rx.functions.Action1;
 /**
  * Our Processors needs to extends from this class
  */
-public abstract class AbstractEndPointProcessor implements Action1<Request> {
+public class AbstractEndPointProcessor implements Action1<Request> {
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndPointProcessor.class);
 
@@ -37,8 +37,11 @@ public abstract class AbstractEndPointProcessor implements Action1<Request> {
 	}
 
 	/**
-	 * Template Method for function registration
+	 * Template Method for function
+	 * You should override this method
 	 */
-	protected abstract void process(Request request);
+	protected void process(Request request) {
+
+	}
 
 }
