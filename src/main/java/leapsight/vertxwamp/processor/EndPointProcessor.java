@@ -13,9 +13,9 @@ import rx.functions.Action1;
 /**
  * Our Processors needs to extends from this class
  */
-public class AbstractEndPointProcessor implements Action1<Request> {
+public class EndPointProcessor implements Action1<Request> {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndPointProcessor.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(EndPointProcessor.class);
 
 	@Override
 	public void call(Request request) {
