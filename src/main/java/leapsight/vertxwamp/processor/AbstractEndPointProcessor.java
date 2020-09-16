@@ -13,9 +13,9 @@ import rx.functions.Action1;
 /**
  * Our Processors needs to extends from this class
  */
-public class EndPointProcessor implements Action1<Request> {
+public abstract class AbstractEndPointProcessor implements Action1<Request> {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger(EndPointProcessor.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndPointProcessor.class);
 
 	@Override
 	public void call(Request request) {
@@ -37,11 +37,8 @@ public class EndPointProcessor implements Action1<Request> {
 	}
 
 	/**
-	 * Template Method for function
-	 * You should override this method
+	 * Template Method for function registration
 	 */
-	protected void process(Request request) {
-
-	}
+	protected abstract void process(Request request);
 
 }
