@@ -1,5 +1,6 @@
 package leapsight.vertxwamp.exception;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -10,35 +11,71 @@ import jawampa.ApplicationError;
 
 public final class GenericExceptionHelper {
 
-	private GenericExceptionHelper() {
-	}
+    private GenericExceptionHelper() {
+    }
 
-	public static <T extends Exception> ApplicationError createMsgFromException(T e, String message) {
-		return createMsgFromException(GenericErrorCodes.UNEXPECTED_ERROR, message, e);
-	}
+    public static <T extends Exception> ApplicationError createMsgFromException(T e, String message) {
+        return createMsgFromException(GenericErrorCodes.UNEXPECTED_ERROR, message, e);
+    }
 
-	public static <T extends Exception> ApplicationError createMsgFromException(String errorCode, String message, T e) {
-		final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
-		final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
+    public static <T> ApplicationError createMsgException(String errorCode, String message, String description) {
+        final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
+        final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
 
-		args.add(message);
-		args.add(e.getMessage());
-		kwArgs.put("exception", e.getLocalizedMessage());
+        args.add(message);
+        args.add(description);
 
-		return new ApplicationError(errorCode, args, kwArgs);
-	}
+        return new ApplicationError(errorCode, args, kwArgs);
+    }
 
-	public static <T> ApplicationError createMsgException(String errorCode, String message, String description,
-			Map<String, T> data) {
-		final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
-		final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
+    public static <T extends Exception> ApplicationError createMsgFromException(String errorCode, String message, T e) {
+        final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
+        final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
 
-		args.add(message);
-		args.add(description);
-		if (data != null)
-			data.entrySet().forEach(map -> kwArgs.put(map.getKey(), map.getValue().toString()));
+        args.add(message);
+        args.add(e.getMessage());
+        kwArgs.put("exception", e.getLocalizedMessage());
 
-		return new ApplicationError(errorCode, args, kwArgs);
-	}
+        return new ApplicationError(errorCode, args, kwArgs);
+    }
+
+    public static <T> ApplicationError createMsgException(String errorCode, String message, String description,
+                                                          Map<String, T> data) {
+        final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
+        final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
+
+        kwArgs.put("message", message);
+        kwArgs.put("description", description);
+        if (data != null)
+            data.forEach((key, value) -> {
+                ObjectNode obj = new ObjectNode(JsonNodeFactory.instance);
+                obj.put(key, value.toString());
+                args.add(obj);
+            });
+
+        return new ApplicationError(errorCode, args, kwArgs);
+    }
+
+    public static <T> ApplicationError createMsgException(String errorCode, String message, String description,
+                                                          List<Map<T, T>> data) {
+        final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
+        final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
+
+        kwArgs.put("message", message);
+        kwArgs.put("description", description);
+        if (data != null && data.size() > 0) {
+            data.forEach((Map<T, T> map) -> {
+                ObjectNode obj = new ObjectNode(JsonNodeFactory.instance);
+                map.forEach((t, t2) -> {
+                    if (t2 != null) {
+                        obj.put(t.toString(), t2.toString());
+                    }
+                });
+                args.add(obj);
+            });
+        }
+
+        return new ApplicationError(errorCode, args, kwArgs);
+    }
 
 }
