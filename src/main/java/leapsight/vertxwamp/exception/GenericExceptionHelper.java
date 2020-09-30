@@ -56,13 +56,11 @@ public final class GenericExceptionHelper {
         return new ApplicationError(errorCode, args, kwArgs);
     }
 
-    public static <T> ApplicationError createMsgException(String errorCode, String message, String description,
-                                                          List<Map<T, T>> data) {
+    public static <T> ApplicationError createMsgException(String errorCode, String message, List<Map<T, T>> data) {
         final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
         final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
 
         kwArgs.put("message", message);
-        kwArgs.put("description", description);
         if (data != null && data.size() > 0) {
             data.forEach((Map<T, T> map) -> {
                 ObjectNode obj = new ObjectNode(JsonNodeFactory.instance);
