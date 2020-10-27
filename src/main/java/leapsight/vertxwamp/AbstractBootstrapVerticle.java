@@ -39,18 +39,18 @@ public abstract class AbstractBootstrapVerticle {
 		Integer metricsPort = Integer.valueOf(env.getProperty("metrics.port"));
 		LOGGER.info("metrics.port: {}", metricsPort);
 
-		MeterRegistry registry = BackendRegistries.getDefaultNow();
-		new JvmMemoryMetrics().bindTo(registry);
-		new ProcessorMetrics().bindTo(registry);
-		new JvmThreadMetrics().bindTo(registry);
-
 		Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(
 			new MicrometerMetricsOptions()
 				.setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
 					.setStartEmbeddedServer(true)
 					.setEmbeddedServerOptions(new HttpServerOptions().setPort(metricsPort))
 					.setEmbeddedServerEndpoint("/metrics")
-				).setMicrometerRegistry(registry).setEnabled(true)));
+				).setRegistryName("jvm-metrics").setEnabled(true)));
+
+		MeterRegistry registry = BackendRegistries.getNow("jvm-metrics");
+		new JvmMemoryMetrics().bindTo(registry);
+		new ProcessorMetrics().bindTo(registry);
+		new JvmThreadMetrics().bindTo(registry);
 
 		VerticleFactory verticleFactory = context.getBean(SpringVerticleFactory.class);
 
