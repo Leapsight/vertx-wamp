@@ -3,6 +3,11 @@ package leapsight.vertxwamp;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.vertx.micrometer.backends.BackendRegistries;
 import leapsight.vertxwamp.verticlefactory.SpringConfigurationLib;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +39,18 @@ public abstract class AbstractBootstrapVerticle {
 		Integer metricsPort = Integer.valueOf(env.getProperty("metrics.port"));
 		LOGGER.info("metrics.port: {}", metricsPort);
 
+		MeterRegistry registry = BackendRegistries.getDefaultNow();
+		new JvmMemoryMetrics().bindTo(registry);
+		new ProcessorMetrics().bindTo(registry);
+		new JvmThreadMetrics().bindTo(registry);
+
 		Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(
-				new MicrometerMetricsOptions().setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
-						.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(metricsPort))
-						.setEmbeddedServerEndpoint("/metrics")).setEnabled(true)));
+			new MicrometerMetricsOptions()
+				.setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
+					.setStartEmbeddedServer(true)
+					.setEmbeddedServerOptions(new HttpServerOptions().setPort(metricsPort))
+					.setEmbeddedServerEndpoint("/metrics")
+				).setMicrometerRegistry(registry).setEnabled(true)));
 
 		VerticleFactory verticleFactory = context.getBean(SpringVerticleFactory.class);
 
