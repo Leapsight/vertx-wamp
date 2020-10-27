@@ -47,8 +47,8 @@ dependencies {
 }
 
 compileJava {
-    targetCompatibility = 13
-    sourceCompatibility = 13
+    targetCompatibility = 11
+    sourceCompatibility = 11
 }
 
 java {
