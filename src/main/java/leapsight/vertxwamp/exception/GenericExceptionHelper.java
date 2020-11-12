@@ -22,8 +22,8 @@ public final class GenericExceptionHelper {
         final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
         final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
 
-        args.add(message);
-        args.add(description);
+        kwArgs.put("message", message);
+        kwArgs.put("description", description);
 
         return new ApplicationError(errorCode, args, kwArgs);
     }
@@ -32,8 +32,8 @@ public final class GenericExceptionHelper {
         final ArrayNode args = new ArrayNode(JsonNodeFactory.instance);
         final ObjectNode kwArgs = new ObjectNode(JsonNodeFactory.instance);
 
-        args.add(message);
-        args.add(e.getMessage());
+        kwArgs.put("message", message);
+        kwArgs.put("description", e.getMessage());
         kwArgs.put("exception", e.getLocalizedMessage());
 
         return new ApplicationError(errorCode, args, kwArgs);
