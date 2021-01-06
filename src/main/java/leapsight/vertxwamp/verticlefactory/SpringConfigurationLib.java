@@ -26,8 +26,11 @@ public class SpringConfigurationLib {
     @Value("${wamp.reconnect.interval.seconds}")
     protected int reconnectIntervalSeconds;
 
+    @Value("${wamp.max.frame.payload.length:16777216}")
+    protected int maxFramePayloadLength;
+
     @Bean("wampClientFactory")
     public WampClientWrapper wampClientWrapper() {
-        return new WampClientWrapper(routerUri, realm, username, password, reconnectIntervalSeconds);
+        return new WampClientWrapper(routerUri, realm, username, password, reconnectIntervalSeconds, maxFramePayloadLength);
     }
 }
