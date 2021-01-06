@@ -26,7 +26,7 @@ public class SpringConfigurationLib {
     @Value("${wamp.reconnect.interval.seconds}")
     protected int reconnectIntervalSeconds;
 
-    @Value("${wamp.max.frame.payload.length:16777216}")
+    @Value("${wamp.max.frame.payload.length:65535}")
     protected int maxFramePayloadLength;
 
     @Bean("wampClientFactory")
