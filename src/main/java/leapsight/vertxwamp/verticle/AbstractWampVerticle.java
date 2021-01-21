@@ -38,7 +38,7 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
         try {
             LOGGER.info("Starting {}...", this.getClass().getSimpleName());
 
-            WampClient wampClient = wampClientWrapper.createWampClient();
+            WampClient wampClient = wampClientWrapper.getWampClient();
             wampClient.open();
             registerProcedures(wampClient); // implementacion propia de cada microservicio
 
@@ -55,14 +55,14 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
      */
     @Override
     public void stop() {
-        LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
-        closeWampClient();
+        // LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
+        // closeWampClient();
         LOGGER.info("{} stopped: {}", this.getClass().getSimpleName(), this.hashCode());
     }
 
     protected void closeWampClient() {
-        LOGGER.info("Closing the WAMP client ...");
+        // LOGGER.info("Closing the WAMP client ...");
         wampClientWrapper.closeConnection();
-        LOGGER.info("WAMP client closed");
+        // LOGGER.info("WAMP client closed");
     }
 }
