@@ -82,7 +82,7 @@ public abstract class AbstractBootstrapVerticle {
 
         postInitialize(vertx, context);
 
-        vertx.eventBus().consumer("wampclient.reset", msg -> {
+        vertx.eventBus().consumer("verticle.reset", msg -> {
             setWampDeplomentId.forEach(deploymentID -> {
                 vertx.undeploy(deploymentID, resp -> {
                     LOGGER.info("Verticle {} is undeployed.", deploymentID);
