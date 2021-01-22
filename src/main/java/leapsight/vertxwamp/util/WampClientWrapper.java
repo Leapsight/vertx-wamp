@@ -39,7 +39,19 @@ public class WampClientWrapper {
         LOGGER.info("Wamp Client Wrapper with connection {} and ticket {}/{} for realm {}, maxFramePayloadLength {}", routerUri, username, password, realm, maxFramePayloadLength);
     }
 
-    public WampClient createWampClient() throws Exception {
+    public WampClient getWampClient() throws Exception {
+        if (wampClient == null) {
+            synchronized (WampClientWrapper.class) {
+                if (wampClient == null) {
+                    createWampClient();
+                }
+            }
+        }
+
+        return wampClient;
+    }
+
+    public void createWampClient() throws Exception {
         IWampConnectorProvider connectorProvider = new NettyWampClientConnectorProvider();
         WampClientBuilder builder = new WampClientBuilder();
         try {
@@ -53,7 +65,8 @@ public class WampClientWrapper {
                     .withReconnectInterval(reconnectIntervalSeconds, TimeUnit.SECONDS)
                     .withConnectionConfiguration((new NettyWampConnectionConfig.Builder()).withMaxFramePayloadLength(maxFramePayloadLength).build());
             wampClient = builder.build();
-            return wampClient;
+            wampClient.open();
+            LOGGER.info("Connection established... WampClient: {}", wampClient.hashCode());
         } catch (Exception ex) {
             LOGGER.error("Error creating connection: ", ex);
             throw ex;
@@ -63,6 +76,8 @@ public class WampClientWrapper {
     public void closeConnection() {
         if (wampClient != null) {
             wampClient.close().toBlocking().last();
+            LOGGER.info("Connection closed... WampClient: {}", wampClient.hashCode());
+            wampClient = null;
         }
     }
 }
