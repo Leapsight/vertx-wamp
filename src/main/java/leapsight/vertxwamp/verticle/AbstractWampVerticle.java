@@ -3,10 +3,8 @@ package leapsight.vertxwamp.verticle;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import jawampa.WampClient;
-import leapsight.vertxwamp.util.WampClientWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
@@ -20,9 +18,6 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 public abstract class AbstractWampVerticle extends AbstractVerticle {
 
     protected static Logger LOGGER = LoggerFactory.getLogger(AbstractWampVerticle.class);
-
-    @Autowired
-    private WampClientWrapper wampClientWrapper;
 
     /**
      * Template Method
@@ -38,8 +33,8 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
         try {
             LOGGER.info("Starting {}...", this.getClass().getSimpleName());
 
-            WampClient wampClient = wampClientWrapper.getWampClient();
-            wampClient.open();
+            // PROVISORIO
+            WampClient wampClient = null;
             registerProcedures(wampClient); // implementacion propia de cada microservicio
 
             startPromise.complete();
@@ -62,7 +57,7 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
 
     protected void closeWampClient() {
         // LOGGER.info("Closing the WAMP client ...");
-        wampClientWrapper.closeConnection();
+        // wampClientWrapper.closeConnection();
         // LOGGER.info("WAMP client closed");
     }
 }

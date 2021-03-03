@@ -13,6 +13,7 @@ import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 import leapsight.vertxwamp.verticle.AbstractWampVerticle;
+import leapsight.vertxwamp.verticle.WampVerticle;
 import leapsight.vertxwamp.verticlefactory.SpringConfigurationLib;
 import leapsight.vertxwamp.verticlefactory.SpringVerticleFactory;
 import org.slf4j.Logger;
@@ -62,6 +63,13 @@ public abstract class AbstractBootstrapVerticle {
         preInitialize(vertx, context);
         // The verticle factory is registered manually because it is created by the Spring container
         vertx.registerVerticleFactory(verticleFactory);
+        vertx.deployVerticle(verticleFactory.prefix() + ":" + WampVerticle.class.getName(), new DeploymentOptions().setInstances(1), deploymentId -> {
+            vertx.eventBus().request("get.wamp.connection", "", ar -> {
+                if (ar.succeeded()) {
+                    ar.result();
+                }
+            });
+        });
 
         setWampDeplomentId = new HashSet<>();
         wampVerticleOptionsMap = new HashMap<>();
