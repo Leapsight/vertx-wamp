@@ -1,12 +1,14 @@
 package leapsight.vertxwamp.verticle;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.DeliveryOptions;
 import jawampa.WampClient;
 import jawampa.WampClientBuilder;
 import jawampa.auth.client.Ticket;
 import jawampa.connection.IWampConnectorProvider;
 import jawampa.transport.netty.NettyWampClientConnectorProvider;
 import jawampa.transport.netty.NettyWampConnectionConfig;
+import leapsight.vertxwamp.codec.WampClientCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,8 +64,9 @@ public class WampVerticle extends AbstractVerticle {
             throw ex;
         }
 
+        DeliveryOptions options = new DeliveryOptions().setCodecName(new WampClientCodec().name());
         vertx.eventBus().consumer("get.wamp.connection", message -> {
-            message.reply(wampClient);
+            message.reply(wampClient, options);
         });
 
 
