@@ -69,6 +69,11 @@ public class WampVerticle extends AbstractVerticle {
             message.reply(wampClient, options);
         });
 
+        vertx.eventBus().consumer("close.wamp.connection", message -> {
+            vertx.close(ar -> {
+                System.exit(-1);
+            });
+        });
 
     }
 
