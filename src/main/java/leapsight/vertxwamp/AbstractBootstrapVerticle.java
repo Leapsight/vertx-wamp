@@ -64,7 +64,6 @@ public abstract class AbstractBootstrapVerticle {
 
         VerticleFactory verticleFactory = context.getBean(SpringVerticleFactory.class);
 
-        preInitialize(vertx, context);
         vertx.registerVerticleFactory(verticleFactory); // The verticle factory is registered manually because it is created by the Spring container
         vertx.deployVerticle(verticleFactory.prefix() + ":" + WampVerticle.class.getName(), new DeploymentOptions().setInstances(1), deploymentId -> {
             preInitialize(vertx, context);
