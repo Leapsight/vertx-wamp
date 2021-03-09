@@ -73,14 +73,18 @@ public abstract class AbstractBootstrapVerticle {
             Map<String, DeploymentOptions> verticleOptionsMap = new HashMap<String, DeploymentOptions>();
             setYourVerticleDeploymentOptions(verticleOptionsMap);
             verticleOptionsMap.forEach((verticleName, option) -> {
-                vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, deplomentId -> {
-                    try {
-                        if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
-                            setWampDeplomentId.add(deplomentId.result());
-                            wampVerticleOptionsMap.put(verticleName, option);
+                vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, result -> {
+                    if (result.succeeded()) {
+                        try {
+                            if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
+                                setWampDeplomentId.add(result.result());
+                                wampVerticleOptionsMap.put(verticleName, option);
+                            }
+                        } catch (ClassNotFoundException e) {
+                            LOGGER.error("ERROR - ClassNotFoundException: {}", e.getMessage());
                         }
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
+                    } else {
+                        LOGGER.error("ERROR - Deploying {}: {}", verticleName, result.cause().getMessage());
                     }
                 });
             });
