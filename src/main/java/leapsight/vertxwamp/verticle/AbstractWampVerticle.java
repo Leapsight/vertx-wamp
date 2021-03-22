@@ -2,11 +2,11 @@ package leapsight.vertxwamp.verticle;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.eventbus.DeliveryOptions;
 import jawampa.WampClient;
-import leapsight.vertxwamp.util.WampClientWrapper;
+import leapsight.vertxwamp.codec.WampClientCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
@@ -21,8 +21,7 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
 
     protected static Logger LOGGER = LoggerFactory.getLogger(AbstractWampVerticle.class);
 
-    @Autowired
-    private WampClientWrapper wampClientWrapper;
+    protected WampClient wampClient;
 
     /**
      * Template Method
@@ -35,18 +34,21 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
      */
     @Override
     public void start(Promise<Void> startPromise) {
-        try {
-            LOGGER.info("Starting {}...", this.getClass().getSimpleName());
+        LOGGER.info("Starting {}...", this.getClass().getSimpleName());
 
-            WampClient wampClient = wampClientWrapper.getWampClient();
-            wampClient.open();
-            registerProcedures(wampClient); // implementacion propia de cada microservicio
+        WampClientCodec codec = new WampClientCodec();
+        DeliveryOptions options = new DeliveryOptions().setCodecName(codec.name());
+        vertx.eventBus().request("get.wamp.connection", wampClient, options, ar -> {
+            if (ar.succeeded()) {
+                wampClient = (WampClient) ar.result().body();
+                registerProcedures(wampClient); // implementacion propia de cada microservicio
 
-            startPromise.complete();
-        } catch (Exception e) {
-            LOGGER.error("WampVerticle initialization failed", e);
-            startPromise.fail("WampVerticle initialization failed"); // avisa que falló, despues en el bootstrap hay que ver que hacer con este fallo (reintentar u otra cosa)
-        }
+                startPromise.complete();
+            } else {
+                LOGGER.error(ar.cause().getMessage());
+                startPromise.fail("WampVerticle initialization failed");
+            }
+        });
     }
 
     /**
@@ -55,14 +57,6 @@ public abstract class AbstractWampVerticle extends AbstractVerticle {
      */
     @Override
     public void stop() {
-        // LOGGER.info("Stopping {}...", this.getClass().getSimpleName());
-        // closeWampClient();
         LOGGER.info("{} stopped: {}", this.getClass().getSimpleName(), this.hashCode());
-    }
-
-    protected void closeWampClient() {
-        // LOGGER.info("Closing the WAMP client ...");
-        wampClientWrapper.closeConnection();
-        // LOGGER.info("WAMP client closed");
     }
 }

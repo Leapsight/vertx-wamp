@@ -12,7 +12,9 @@ import io.vertx.core.spi.VerticleFactory;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
+import leapsight.vertxwamp.codec.WampClientCodec;
 import leapsight.vertxwamp.verticle.AbstractWampVerticle;
+import leapsight.vertxwamp.verticle.WampVerticle;
 import leapsight.vertxwamp.verticlefactory.SpringConfigurationLib;
 import leapsight.vertxwamp.verticlefactory.SpringVerticleFactory;
 import org.slf4j.Logger;
@@ -52,6 +54,9 @@ public abstract class AbstractBootstrapVerticle {
                                 .setEmbeddedServerEndpoint("/metrics")
                         ).setRegistryName("jvm-metrics").setEnabled(true)));
 
+        WampClientCodec codec = new WampClientCodec();
+        vertx.eventBus().registerCodec(codec);
+
         MeterRegistry registry = BackendRegistries.getNow("jvm-metrics");
         new JvmMemoryMetrics().bindTo(registry);
         new ProcessorMetrics().bindTo(registry);
@@ -59,49 +64,33 @@ public abstract class AbstractBootstrapVerticle {
 
         VerticleFactory verticleFactory = context.getBean(SpringVerticleFactory.class);
 
-        preInitialize(vertx, context);
-        // The verticle factory is registered manually because it is created by the Spring container
-        vertx.registerVerticleFactory(verticleFactory);
+        vertx.registerVerticleFactory(verticleFactory); // The verticle factory is registered manually because it is created by the Spring container
+        vertx.deployVerticle(verticleFactory.prefix() + ":" + WampVerticle.class.getName(), new DeploymentOptions().setInstances(1), deploymentId -> {
+            preInitialize(vertx, context);
 
-        setWampDeplomentId = new HashSet<>();
-        wampVerticleOptionsMap = new HashMap<>();
-        Map<String, DeploymentOptions> verticleOptionsMap = new HashMap<String, DeploymentOptions>();
-        setYourVerticleDeploymentOptions(verticleOptionsMap);
-        verticleOptionsMap.forEach((verticleName,option) -> {
-            vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, deplomentId -> {
-                try {
-                    if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
-                        setWampDeplomentId.add(deplomentId.result());
-                        wampVerticleOptionsMap.put(verticleName, option);
+            setWampDeplomentId = new HashSet<>();
+            wampVerticleOptionsMap = new HashMap<>();
+            Map<String, DeploymentOptions> verticleOptionsMap = new HashMap<String, DeploymentOptions>();
+            setYourVerticleDeploymentOptions(verticleOptionsMap);
+            verticleOptionsMap.forEach((verticleName, option) -> {
+                vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, result -> {
+                    if (result.succeeded()) {
+                        try {
+                            if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
+                                setWampDeplomentId.add(result.result());
+                                wampVerticleOptionsMap.put(verticleName, option);
+                            }
+                        } catch (ClassNotFoundException e) {
+                            LOGGER.error("ERROR - ClassNotFoundException: {}", e.getMessage());
+                        }
+                    } else {
+                        LOGGER.error("ERROR - Deploying {}: {}", verticleName, result.cause().getMessage());
                     }
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
+                });
             });
         });
 
         postInitialize(vertx, context);
-
-        vertx.eventBus().consumer("verticle.reset", msg -> {
-            setWampDeplomentId.forEach(deploymentID -> {
-                vertx.undeploy(deploymentID, resp -> {
-                    LOGGER.info("Verticle {} is undeployed.", deploymentID);
-                });
-            });
-
-            setWampDeplomentId = new HashSet<>();
-            wampVerticleOptionsMap.forEach((verticleName, option) -> {
-                vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, deplomentId -> {
-                    try {
-                        if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
-                            setWampDeplomentId.add(deplomentId.result());
-                        }
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-        });
     }
 
     /**
