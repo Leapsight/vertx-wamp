@@ -33,7 +33,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus:1.7.4'
 
     // Spring dependency
-    implementation 'org.springframework:spring-context:5.3.10'
+    implementation 'org.springframework:spring-context:5.2.8.RELEASE'
 
     // Log
     implementation 'org.slf4j:jcl-over-slf4j:1.7.32'
