@@ -1,17 +1,25 @@
 package leapsight.vertxwamp;
 
+import io.jaegertracing.Configuration;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.opentracing.Tracer;
+import io.opentracing.util.GlobalTracer;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.spi.VerticleFactory;
+import io.vertx.core.tracing.TracingPolicy;
+import io.vertx.micrometer.Label;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
+import io.vertx.micrometer.impl.VertxMetricsFactoryImpl;
+import io.vertx.tracing.opentracing.OpenTracingOptions;
 import leapsight.vertxwamp.codec.WampClientCodec;
 import leapsight.vertxwamp.verticle.AbstractWampVerticle;
 import leapsight.vertxwamp.verticle.WampVerticle;
@@ -23,10 +31,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.Environment;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * El ExampleBootstrapVerticle de cada Microservicio, deberá extender esta clase que se encarga de inicializar Vertx
@@ -42,53 +47,78 @@ public abstract class AbstractBootstrapVerticle {
     public void start() {
         ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfigurationLib.class, theSpringConfigClass());
 
+        MeterRegistry meter = context.getBean(MeterRegistry.class);
+
         Environment env = context.getBean(Environment.class);
         Integer metricsPort = Integer.valueOf(env.getProperty("metrics.port"));
         LOGGER.info("metrics.port: {}", metricsPort);
 
-        Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(
-                new MicrometerMetricsOptions()
-                        .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
+        // Create and register tracer
+        Tracer tracer = Configuration.fromEnv("event-processor").getTracer();
+        GlobalTracer.registerIfAbsent(tracer);
+
+        Vertx vertx = Vertx.vertx(new VertxOptions()
+              .setMetricsOptions(
+                    new MicrometerMetricsOptions()
+                          .setMicrometerRegistry(meter)
+                          .setFactory(new VertxMetricsFactoryImpl())
+                          .setJvmMetricsEnabled(true)
+                          .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
                                 .setStartEmbeddedServer(true)
-                                .setEmbeddedServerOptions(new HttpServerOptions().setPort(metricsPort))
-                                .setEmbeddedServerEndpoint("/metrics")
-                        ).setRegistryName("jvm-metrics").setEnabled(true)));
+                                .setEmbeddedServerOptions(new HttpServerOptions()
+                                      .setPort(metricsPort)
+                                      .setTracingPolicy(TracingPolicy.IGNORE))
+                                .setEmbeddedServerEndpoint("/metrics"))
+                          .setLabels(EnumSet.of(
+                                                Label.HTTP_CODE,
+                                                Label.HTTP_ROUTE,
+                                                Label.HTTP_METHOD
+                                                )
+                                    )
+                          .setEnabled(true))
+              .setTracingOptions(
+                    new OpenTracingOptions(tracer)));
 
-        WampClientCodec codec = new WampClientCodec();
-        vertx.eventBus().registerCodec(codec);
-
+        // Set up metrics
         MeterRegistry registry = BackendRegistries.getNow("jvm-metrics");
+        new FileDescriptorMetrics().bindTo(registry);
         new JvmMemoryMetrics().bindTo(registry);
         new ProcessorMetrics().bindTo(registry);
         new JvmThreadMetrics().bindTo(registry);
 
+        WampClientCodec codec = new WampClientCodec();
+        vertx.eventBus().registerCodec(codec);
+
         VerticleFactory verticleFactory = context.getBean(SpringVerticleFactory.class);
 
-        vertx.registerVerticleFactory(verticleFactory); // The verticle factory is registered manually because it is created by the Spring container
-        vertx.deployVerticle(verticleFactory.prefix() + ":" + WampVerticle.class.getName(), new DeploymentOptions().setInstances(1), deploymentId -> {
-            preInitialize(vertx, context);
+        // The verticle factory is registered manually because it is created by the Spring container
+        vertx.registerVerticleFactory(verticleFactory);
 
-            setWampDeplomentId = new HashSet<>();
-            wampVerticleOptionsMap = new HashMap<>();
-            Map<String, DeploymentOptions> verticleOptionsMap = new HashMap<String, DeploymentOptions>();
-            setYourVerticleDeploymentOptions(verticleOptionsMap);
-            verticleOptionsMap.forEach((verticleName, option) -> {
-                vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, result -> {
-                    if (result.succeeded()) {
-                        try {
-                            if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
-                                setWampDeplomentId.add(result.result());
-                                wampVerticleOptionsMap.put(verticleName, option);
+        vertx.deployVerticle(verticleFactory.prefix() + ":" + WampVerticle.class.getName(),
+              new DeploymentOptions().setInstances(1),
+              deploymentId -> {
+                preInitialize(vertx, context);
+                setWampDeplomentId = new HashSet<>();
+                wampVerticleOptionsMap = new HashMap<>();
+                Map<String, DeploymentOptions> verticleOptionsMap = new HashMap<>();
+                setYourVerticleDeploymentOptions(verticleOptionsMap);
+                verticleOptionsMap.forEach((verticleName, option) -> {
+                    vertx.deployVerticle(verticleFactory.prefix() + ":" + verticleName, option, result -> {
+                        if (result.succeeded()) {
+                            try {
+                                if (Class.forName(verticleName).getSuperclass() == AbstractWampVerticle.class) {
+                                    setWampDeplomentId.add(result.result());
+                                    wampVerticleOptionsMap.put(verticleName, option);
+                                }
+                            } catch (ClassNotFoundException e) {
+                                LOGGER.error("ERROR - ClassNotFoundException: {}", e.getMessage());
                             }
-                        } catch (ClassNotFoundException e) {
-                            LOGGER.error("ERROR - ClassNotFoundException: {}", e.getMessage());
+                        } else {
+                            LOGGER.error("ERROR - Deploying {}: {}", verticleName, result.cause().getMessage());
                         }
-                    } else {
-                        LOGGER.error("ERROR - Deploying {}: {}", verticleName, result.cause().getMessage());
-                    }
+                    });
                 });
             });
-        });
 
         postInitialize(vertx, context);
     }

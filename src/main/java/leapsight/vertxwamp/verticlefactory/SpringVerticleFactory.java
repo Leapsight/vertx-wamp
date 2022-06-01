@@ -18,16 +18,8 @@ public class SpringVerticleFactory implements VerticleFactory, ApplicationContex
   private ApplicationContext applicationContext;
   private static final Logger LOGGER = LoggerFactory.getLogger(SpringVerticleFactory.class);
 
-
-  public boolean blockingCreate() {
-    // Usually verticle instantiation is fast but since our verticles are Spring Beans,
-    // they might depend on other beans/resources which are slow to build/lookup.
-    return true;
-  }
-
   @Override
   public String prefix() {
-    // Just an arbitrary string which must uniquely identify the verticle factory
     return "ls-vertxwamp";
   }
 
