@@ -34,7 +34,6 @@ import org.springframework.core.env.Environment;
 import java.util.*;
 
 /**
- * El ExampleBootstrapVerticle de cada Microservicio, deberá extender esta clase que se encarga de inicializar Vertx
  */
 public abstract class AbstractBootstrapVerticle {
 
