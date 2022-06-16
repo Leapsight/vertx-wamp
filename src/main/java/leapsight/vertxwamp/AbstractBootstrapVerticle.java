@@ -79,7 +79,8 @@ public abstract class AbstractBootstrapVerticle {
                     new OpenTracingOptions(tracer)));
 
         // Set up metrics
-        MeterRegistry registry = BackendRegistries.getNow("jvm-metrics");
+//        MeterRegistry registry = BackendRegistries.getNow("jvm-metrics");
+        MeterRegistry registry = BackendRegistries.getDefaultNow();
         new FileDescriptorMetrics().bindTo(registry);
         new JvmMemoryMetrics().bindTo(registry);
         new ProcessorMetrics().bindTo(registry);
