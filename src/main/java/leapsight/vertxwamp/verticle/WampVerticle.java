@@ -4,6 +4,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import jawampa.WampClient;
 import jawampa.WampClientBuilder;
+import jawampa.auth.client.ClientSideAuthentication;
+import jawampa.auth.client.Password;
 import jawampa.auth.client.Ticket;
 import jawampa.connection.IWampConnectorProvider;
 import jawampa.transport.netty.NettyWampClientConnectorProvider;
@@ -25,6 +27,9 @@ public class WampVerticle extends AbstractVerticle {
     @Value("${wamp.realm}")
     private String realm;
 
+    @Value("${wamp.auth.method}")
+    private String authMethod;
+
     @Value("${wamp.username}")
     private String username;
 
@@ -44,6 +49,13 @@ public class WampVerticle extends AbstractVerticle {
     public void start() throws Exception {
         LOGGER.info("Starting WampVerticle...");
 
+        ClientSideAuthentication authMethodObj;
+        if("password".equals(authMethod)) {
+            authMethodObj = new Password(password);
+        } else {
+            authMethodObj = new Ticket(password);
+        }
+
         IWampConnectorProvider connectorProvider = new NettyWampClientConnectorProvider();
         WampClientBuilder builder = new WampClientBuilder();
         try {
@@ -52,7 +64,7 @@ public class WampVerticle extends AbstractVerticle {
                     .withUri(routerUri)
                     .withRealm(realm)
                     .withAuthId(username)
-                    .withAuthMethod(new Ticket(password))
+                    .withAuthMethod(authMethodObj)
                     .withInfiniteReconnects()
                     .withReconnectInterval(reconnectIntervalSeconds, TimeUnit.SECONDS)
                     .withConnectionConfiguration((new NettyWampConnectionConfig.Builder()).withMaxFramePayloadLength(maxFramePayloadLength).build());
