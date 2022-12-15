@@ -7,6 +7,7 @@ import jawampa.WampClientBuilder;
 import jawampa.auth.client.ClientSideAuthentication;
 import jawampa.auth.client.Password;
 import jawampa.auth.client.Ticket;
+import jawampa.auth.client.CryptosignAuth;
 import jawampa.connection.IWampConnectorProvider;
 import jawampa.transport.netty.NettyWampClientConnectorProvider;
 import jawampa.transport.netty.NettyWampConnectionConfig;
@@ -27,14 +28,20 @@ public class WampVerticle extends AbstractVerticle {
     @Value("${wamp.realm}")
     private String realm;
 
-    @Value("${wamp.auth.method}")
+    @Value("${wamp.auth.method:password}")
     private String authMethod;
 
     @Value("${wamp.username}")
     private String username;
 
-    @Value("${wamp.password}")
+    @Value("${wamp.password:null}")
     private String password;
+
+    @Value("${wamp.pubkey:null}")
+    private String pubkey;
+
+    @Value("${wamp.privkey:null}")
+    private String privkey;
 
     @Value("${wamp.reconnect.interval.seconds}")
     private int reconnectIntervalSeconds;
@@ -49,11 +56,19 @@ public class WampVerticle extends AbstractVerticle {
     public void start() throws Exception {
         LOGGER.info("Starting WampVerticle...");
 
-        ClientSideAuthentication authMethodObj;
-        if("password".equals(authMethod)) {
-            authMethodObj = new Password(password);
-        } else {
-            authMethodObj = new Ticket(password);
+        final ClientSideAuthentication authMethodObj;
+        switch (authMethod) {
+            case "password":
+                authMethodObj = new Password(password);
+                break;
+            case "ticket":
+                authMethodObj = new Ticket(password);
+                break;
+            case "cryptosign":
+                authMethodObj = new CryptosignAuth(privkey, pubkey);
+                break;
+            default:
+                authMethodObj = null;
         }
 
         IWampConnectorProvider connectorProvider = new NettyWampClientConnectorProvider();
