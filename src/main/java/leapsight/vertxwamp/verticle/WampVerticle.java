@@ -7,7 +7,7 @@ import jawampa.WampClientBuilder;
 import jawampa.auth.client.ClientSideAuthentication;
 import jawampa.auth.client.Password;
 import jawampa.auth.client.Ticket;
-import jawampa.auth.client.CryptosignAuth;
+import jawampa.auth.client.Cryptosign;
 import jawampa.connection.IWampConnectorProvider;
 import jawampa.transport.netty.NettyWampClientConnectorProvider;
 import jawampa.transport.netty.NettyWampConnectionConfig;
@@ -34,13 +34,15 @@ public class WampVerticle extends AbstractVerticle {
     @Value("${wamp.username}")
     private String username;
 
-    @Value("${wamp.password:null}")
+    // used for Ticket and Password Auth Method
+    @Value("${wamp.password:changeit}")
     private String password;
 
-    @Value("${wamp.pubkey:null}")
+    // both (pubkey and privkey) used for Cryptosign Auth Method
+    @Value("${wamp.pubkey:changeit}")
     private String pubkey;
 
-    @Value("${wamp.privkey:null}")
+    @Value("${wamp.privkey:changeit}")
     private String privkey;
 
     @Value("${wamp.reconnect.interval.seconds}")
@@ -54,7 +56,7 @@ public class WampVerticle extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(WampVerticle.class);
 
     public void start() throws Exception {
-        LOGGER.info("Starting WampVerticle...");
+        LOGGER.info("Starting WampVerticle ...");
 
         final ClientSideAuthentication authMethodObj;
         switch (authMethod) {
@@ -65,7 +67,7 @@ public class WampVerticle extends AbstractVerticle {
                 authMethodObj = new Ticket(password);
                 break;
             case "cryptosign":
-                authMethodObj = new CryptosignAuth(privkey, pubkey);
+                authMethodObj = new Cryptosign(privkey, pubkey);
                 break;
             default:
                 authMethodObj = null;
@@ -85,10 +87,10 @@ public class WampVerticle extends AbstractVerticle {
                     .withConnectionConfiguration((new NettyWampConnectionConfig.Builder()).withMaxFramePayloadLength(maxFramePayloadLength).build());
             wampClient = builder.build();
             wampClient.open();
-            LOGGER.info("Connection established... WampClient: {}", wampClient.hashCode());
-        } catch (Exception ex) {
-            LOGGER.error("Error creating connection: ", ex);
-            throw ex;
+            LOGGER.info("Connection established to: '{}' on realm '{}' using '{}' auth method", routerUri, realm, authMethod);
+        } catch (Exception e) {
+            LOGGER.error("Error building connection to: '{}' on realm '{}' using '{}' auth method", routerUri, realm, authMethod, e);
+            throw e;
         }
 
         DeliveryOptions options = new DeliveryOptions().setCodecName(new WampClientCodec().name());
@@ -101,5 +103,7 @@ public class WampVerticle extends AbstractVerticle {
                 System.exit(-1);
             });
         });
+
+        LOGGER.info("WampVerticle started successfully");
     }
 }
