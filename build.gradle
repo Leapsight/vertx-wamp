@@ -35,12 +35,8 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.6'
     implementation 'net.logstash.logback:logstash-logback-encoder:6.6'
 
-    // libsodium
-    implementation "com.goterl:lazysodium-java:5.1.4"
-    implementation "net.java.dev.jna:jna:5.12.1"
-
     // Use JUnit test framework
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'junit:junit:4.12'
 }
 
 compileJava {
