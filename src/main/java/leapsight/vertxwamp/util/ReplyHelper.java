@@ -45,7 +45,7 @@ public final class ReplyHelper {
 					: "";
 			// pick the start time of operation (request received)
 			Instant start = Instant
-					.ofEpochMilli(request.keywordArguments().get(LoggingConstants.WAMP_START_TIME_KEY).asLong());
+					.ofEpochMilli(request.details().get(LoggingConstants.WAMP_START_TIME_KEY).asLong());
 			if (start == null) {
 				start = Instant.now();
 			}

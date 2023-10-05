@@ -19,15 +19,13 @@ public abstract class AbstractEndPointProcessor implements Action1<Request> {
 
 	@Override
 	public void call(Request request) {
-		Instant start = null;
-		String procedure = null;
-		try {
-			start = Instant.now();
-			procedure = request.details().get(LoggingConstants.WAMP_PROCEDURE_KEY) != null
-					? request.details().get(LoggingConstants.WAMP_PROCEDURE_KEY).asText()
-					: "undefined";
-			request.keywordArguments().put(LoggingConstants.WAMP_START_TIME_KEY, start.toEpochMilli());
+		final Instant start = Instant.now();
+		final String procedure = request.details().get(LoggingConstants.WAMP_PROCEDURE_KEY) != null
+				? request.details().get(LoggingConstants.WAMP_PROCEDURE_KEY).asText()
+				: "undefined";
+		request.details().put(LoggingConstants.WAMP_START_TIME_KEY, start.toEpochMilli());
 
+		try {
 			LOGGER.info("{} START! Request Arguments: {} - KwArguments: {}", procedure, request.arguments(),
 					request.keywordArguments());
 			process(request);
