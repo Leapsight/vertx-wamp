@@ -1,4 +1,4 @@
-package saleCH.service;
+package leapsight.vertxwamp.service;
 
 import io.vertx.ext.web.RoutingContext;
 

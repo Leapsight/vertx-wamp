@@ -91,4 +91,12 @@ public abstract class AbstractHealthVerticle extends AbstractVerticle {
       }
     });
   }
+
+  public WampClient.State getState() {
+    return state;
+  }
+
+  public void setState(WampClient.State state) {
+    this.state = state;
+  }
 }
