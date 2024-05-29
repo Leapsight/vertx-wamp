@@ -51,12 +51,12 @@ public final class ReplyHelper {
 			}
 			final Instant end = Instant.now();
 
-			LOGGER.info("json", v(LoggingConstants.PROCEDURE_KEY, procedure), v(LoggingConstants.START_DATE_KEY, start),
+			LOGGER.info("json", new Object[]{v(LoggingConstants.PROCEDURE_KEY, procedure), v(LoggingConstants.START_DATE_KEY, start),
 					v(LoggingConstants.END_DATE_KEY, end),
 					v(LoggingConstants.TIME_ELAPSED_IN_MS_KEY, ChronoUnit.MILLIS.between(start, end)),
 					v(LoggingConstants.REQUEST_ARGS_KEY, request.arguments()),
 					v(LoggingConstants.REQUEST_KWARGS_KEY, request.keywordArguments()),
-					v(LoggingConstants.RESPONSE_KEY, response), v(LoggingConstants.LOG_TYPE_KEY, LOG_TYPE_VALUE));
+					v(LoggingConstants.RESPONSE_KEY, response), v(LoggingConstants.LOG_TYPE_KEY, LOG_TYPE_VALUE)});
 
 		} catch (Exception e) {
 			LOGGER.error("{} Error generating json log", e);
