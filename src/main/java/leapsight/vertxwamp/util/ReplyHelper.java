@@ -52,12 +52,9 @@ public final class ReplyHelper {
 			}
 			final Instant end = Instant.now();
 
-			String startFormatted = start.atZone(ZoneId.of("America/Buenos_Aires")).toString().replaceAll("[TZ]", " ").substring(0, 22);
-			String endFormatted = end.atZone(ZoneId.of("America/Buenos_Aires")).toString().replaceAll("[TZ]", " ").substring(0, 22);
-
 			LOGGER.info("json", v(LoggingConstants.PROCEDURE_KEY, procedure),
-					v(LoggingConstants.START_DATE_KEY, startFormatted),
-					v(LoggingConstants.END_DATE_KEY, endFormatted),
+					v(LoggingConstants.START_DATE_KEY, start.toString()),
+					v(LoggingConstants.END_DATE_KEY, end.toString()),
 					v(LoggingConstants.TIME_ELAPSED_IN_MS_KEY, ChronoUnit.MILLIS.between(start, end)),
 					v(LoggingConstants.REQUEST_ARGS_KEY, request.arguments()),
 					v(LoggingConstants.REQUEST_KWARGS_KEY, request.keywordArguments()),
